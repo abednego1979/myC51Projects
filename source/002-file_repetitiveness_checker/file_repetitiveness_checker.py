@@ -167,6 +167,12 @@ def main():
             tempFileName=os.path.join(dirpath, filepath)
             
             #有些文件可能不需要参与hash去重复的过程，所以这里有机会写代码continue
+            if tempFileName.endswith(".py") or tempFileName.endswith(".pyc"):
+                continue
+            if tempFileName.endswith(".sqlite"):
+                continue
+            if os.path.getsize(tempFileName)==0:
+                continue
 
             #求md5值
             md5_len_path=md5(tempFileName)
