@@ -184,7 +184,12 @@ def main():
             if len(res)==0:
                 #如果这个文件不与数据库中的已有文件的md5冲突，认为是一个不重复的文件，把这个文件的数据写入数据库
                 ins=db.SqlCmd_INSERT(['md5', 'len', 'path'], list(md5_len_path))
-                print (ins)
+                try:
+                    print (ins)
+                except:
+                    print (md5_len_path)
+                    input("Insirt STRING ERROR")
+                    pass
                 res=db.Insert(ins)
                 db.Commit()
             else:
