@@ -150,14 +150,6 @@ def md5(filename):
 ######################################################
 
 
-def print_info(info):
-    try:
-        print (info)
-    except:
-        print ("ERROR when output info.")
-    pass
-
-
 def main():
     global DB_NAME
     
@@ -165,8 +157,9 @@ def main():
     
     #连接数据库
     db=MyDB_Sqlite(DB_NAME)
-    #db.Drop()
+    db.Drop()
     db.Connect()
+    
             
     root="."
     for dirpath, dirnames, filenames in os.walk(root):
@@ -180,21 +173,10 @@ def main():
                 continue
             if os.path.getsize(tempFileName)==0:
                 continue
-            
-            #检查是否这个文件在数据库中有相同path和len的记录，如果有，就continue不处理了
-            sel=db.SqlCmd_SELECT("md5, len", 'path="%s"' % tempFileName)
-            res=db.Query(sel)
-            if len(res)==1 and res[0][1]==os.path.getsize(tempFileName):
-                print_info ("repeat:")
-                print_info (tempFileName)
-
-                continue
-                
-            
 
             #求md5值
             md5_len_path=md5(tempFileName)
-            print_info (md5_len_path)
+            print (md5_len_path)
             
             #检查这个文件的md5值是否已经在数据库中存在
             sel=db.SqlCmd_SELECT("len,path", 'md5="%s"' % md5_len_path[0])
@@ -202,32 +184,31 @@ def main():
             if len(res)==0:
                 #如果这个文件不与数据库中的已有文件的md5冲突，认为是一个不重复的文件，把这个文件的数据写入数据库
                 ins=db.SqlCmd_INSERT(['md5', 'len', 'path'], list(md5_len_path))
-                print_info(ins)
+                try:
+                    print (ins)
+                except:
+                    print (md5_len_path)
+                    input("Insirt STRING ERROR")
+                    pass
                 res=db.Insert(ins)
                 db.Commit()
             else:
                 #发现冲突
                 if res[0][1] != tempFileName:
                     #应该删除这个文件
-                    print_info (res[0][1]+"<<<<>>>>"+tempFileName)
-                    #print_info ("Delete: "+tempFileName)
+                    print (res[0][1]+"<<<<>>>>"+tempFileName)
+                    #print ("Delete: "+tempFileName)
                     files2Del.append(tempFileName)
             pass
         pass
     db.Close()
     
-    print_info (">>>>>>>>>>>>>>>>>>>>>>>>")
-    print_info ("Files should be deleted:")
+    print (">>>>>>>>>>>>>>>>>>>>>>>>")
+    print ("Files should be deleted:")
     for item in files2Del:
-        print_info ("del "+item)
-        
-    db.Connect()
-    sel=db.SqlCmd_SELECT("*", '')
-    res=db.Query(sel)
-    print_info ("%d items record in DB" % len(res))
-    db.Close()
+        print (item)
 
 if __name__ == "__main__":
-    print_info ("Start ...")
+    print ("Start ...")
     main()
-    print_info ("End ...")
+    print ("End ...")
