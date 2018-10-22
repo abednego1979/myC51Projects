@@ -15,6 +15,7 @@ import sys
 
 import re
 import copy
+import argparse
 import sqlite3
 import hashlib
 
@@ -158,7 +159,7 @@ def print_info(info):
     pass
 
 
-def main():
+def main_checkRepetitiveness(basePath):
     global DB_NAME
     
     files2Del=[]
@@ -168,8 +169,7 @@ def main():
     #db.Drop()
     db.Connect()
             
-    root="."
-    for dirpath, dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(basePath):
         for filepath in filenames:
             tempFileName=os.path.join(dirpath, filepath)
             
@@ -182,7 +182,7 @@ def main():
                 continue
             
             #检查是否这个文件在数据库中有相同path和len的记录，如果有，就continue不处理了
-            sel=db.SqlCmd_SELECT("md5, len", 'path="%s"' % tempFileName)
+            sel=db.SqlCmd_SELECT("md5, len", 'path="%s"' % tempFileName[len(basePath):])#数据库中放的是相对路径
             res=db.Query(sel)
             if len(res)==1 and res[0][1]==os.path.getsize(tempFileName):
                 print_info ("repeat:")
@@ -193,7 +193,8 @@ def main():
             
 
             #求md5值
-            md5_len_path=md5(tempFileName)
+            md5_len_path=list(md5(tempFileName))
+            md5_len_path[2]=md5_len_path[2][len(basePath):]
             print_info (md5_len_path)
             
             #检查这个文件的md5值是否已经在数据库中存在
@@ -226,8 +227,40 @@ def main():
     res=db.Query(sel)
     print_info ("%d items record in DB" % len(res))
     db.Close()
+    
+def main(args, parser):
+    if args.check:
+        temp_dir="."
+        
+        if args.destination:
+            if not os.path.isdir(args.destination[0]):
+                parser.print_help()
+                return
+            else:
+                temp_dir=args.destination[0].rstrip("\\")
+        main_checkRepetitiveness(os.path.join(os.getcwd(), temp_dir))
+    elif args.merge:
+        if not args.destination or not os.path.isfile(args.destination[0]) or not args.destination[0].endswith(".sqlite"):
+            parser.print_help()
+            return
+        if not args.source or not os.path.isfile(args.source[0]) or not args.source[0].endswith(".sqlite"):
+            parser.print_help()
+            return
+        
+        main_mergeRepetitiveness(os.path.join(os.getcwd(), args.destination[0].rstrip("\\")), os.path.join(os.getcwd(), args.source[0].rstrip("\\")))
+
+    pass
 
 if __name__ == "__main__":
     print_info ("Start ...")
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--check", help="Check the Files Repetitiveness, Show the File needed to be deleted", action="store_true")
+    parser.add_argument("-m", "--merge", help="Merge two Directory, Show the File needed to be deleted", action="store_true")
+    parser.add_argument("-s", "--source", help="Source DB file(check result of Slave Directory)", nargs=1)
+    parser.add_argument("-d", "--destination", help="Destination DB file(check result of Main Directory)", nargs=1)
+    args = parser.parse_args()
+    if True in list(args.__dict__.values()):
+        main(args, parser)
+    else:
+        parser.print_help()
     print_info ("End ...")
