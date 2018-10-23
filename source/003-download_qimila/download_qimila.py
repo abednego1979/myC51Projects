@@ -48,8 +48,15 @@ class TestDemo(unittest.TestCase):
     def test_dataPickerByRightKey(self):
         #global value
         global BI
+        
+        
+        while True:
+            try:
+                cur_url = BI.baseUrls.pop(0)
+            except:
+                return
+        
 
-        for cur_url in BI.baseUrls:
             print ("Proc: %s" % cur_url)
             self.driver.get(cur_url)
             # 将窗口最大化
@@ -62,7 +69,8 @@ class TestDemo(unittest.TestCase):
             soup = BeautifulSoup(source,"lxml")
             
             #解析
-            res = adapt_code.soupParse(soup, BI, self.driver)
+            res,newUrls = adapt_code.soupParse(cur_url, soup, BI)
+            BI.baseUrls+=newUrls
             
             #存入数据库
             db = sqlite3.connect(BI.db_dbName)        #连接数据库
