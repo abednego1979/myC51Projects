@@ -40,21 +40,25 @@ def soupParse(cur_url, soup, BI):
     links=[item for item in links if (item is not None) and ("share.weiyun.com" in item)]
     
     if len(links)==0:       #这是旗米拉的入口页
-        ul=soup.findAll("ul")[3]
-        lis=ul.findAll("li")
-        links=["http://qimila.vip/"+item.find("a").get("href") for item in lis]
-        descriptions=[item.find("a").getText() for item in lis]
-        program_names=[item.split(" ")[0]+" "+item.split(" ")[1] for item in descriptions]
-        dates=[item.split(" ")[1] for item in descriptions]
-        file_name=[""]*len(dates)
+        for ul in soup.findAll("ul"):
+            lis=ul.findAll("li")
+            if len(lis)<10:
+                continue
+            links=["http://qimila.vip/"+item.find("a").get("href") for item in lis]
+            descriptions=[item.find("a").getText() for item in lis]
+            program_names=[item.split(" ")[0]+" "+item.split(" ")[1] for item in descriptions]
+            dates=[item.split(" ")[1] for item in descriptions]
+            file_name=[""]*len(dates)
+            break
     
         res=list(zip(dates, program_names, file_name, descriptions, links))
     
         for item in res:
             try:
+                print (">>>>")
                 print (item)
             except:
-                print ("Some un-printed Text")
+                print (">>>>Some un-printed Text")
             
         #与数据库中的记录进行比较，看看是否有新发布的节目
         new_program=[item for item in res if item[1] not in saved_program_names]
@@ -72,8 +76,8 @@ def soupParse(cur_url, soup, BI):
         if len(links)==0:
             downloaded_program=[]
         else:
-            print (">>")
-            print (links[0])
+            print (">>>>")
+            #print (links[0])
             
             link=links[0]
             #datetime,program_name,file_name,description
@@ -84,11 +88,11 @@ def soupParse(cur_url, soup, BI):
             file_name=''
 
             #下载
-            print ("Download %s" % program_name)
+            print (">>>>%s : %s" % (program_name, link))
             file_name='waiting to define.mkv'
-            print ("Download Over")
             
             downloaded_program=[[datetime, program_name, file_name, description]]
+            newUrls.append(link)
     
     return downloaded_program,newUrls
         
