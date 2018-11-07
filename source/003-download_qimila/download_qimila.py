@@ -134,23 +134,23 @@ class TestDemo(unittest.TestCase):
             
         #下载weiyun_links中保存的要下载的链接
         print (">>>>Doneload weiyun file:")
-        for wei_link in weiyun_links:
-            print ("<>URL: %s" % wei_link[0])
-            print ("<>FileName: %s" % wei_link[2])
-            self.driver.get(wei_link[0])
-            time.sleep(3)
+        #for wei_link in weiyun_links:
+            #print ("<>URL: %s" % wei_link[0])
+            #print ("<>FileName: %s" % wei_link[2])
+            #self.driver.get(wei_link[0])
+            #time.sleep(3)
             
-            #已经打开界面，现在获得网页编码
-            source=self.driver.page_source
-            soup = BeautifulSoup(source,"lxml")
+            ##已经打开界面，现在获得网页编码
+            #source=self.driver.page_source
+            #soup = BeautifulSoup(source,"lxml")
             
-            #找到文件下载链接
-            a = self.driver.find_elements_by_xpath('//*[@id="app"]/div/div[2]/div/div/div/div[2]/div[1]/div[2]/div[1]/div/ul/li/div/div[2]/p/span')
-            time.sleep(2)
+            ##找到文件下载链接
+            #a = self.driver.find_elements_by_xpath('//*[@id="app"]/div/div[2]/div/div/div/div[2]/div[1]/div[2]/div[1]/div/ul/li/div/div[2]/p/span')
+            #time.sleep(2)
             
-            # 在找到的链接元素上模拟点击鼠标左键
-            ActionChains(self.driver).click(a).perform()
-            time.sleep(10)
+            ## 在找到的链接元素上模拟点击鼠标左键
+            #ActionChains(self.driver).click(a).perform()
+            #time.sleep(10)
         
         print (">>>>Doneload weiyun file done")
         

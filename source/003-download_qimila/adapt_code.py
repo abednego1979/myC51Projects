@@ -8,6 +8,7 @@ import xlwt
 import re
 import os
 import time
+import sys
 from bs4 import BeautifulSoup
 
 def preProc(BI):
