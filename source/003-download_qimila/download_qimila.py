@@ -15,7 +15,12 @@ import xlwt
 import configparser
 import re
 
+config_resMail=False
+
+if config_resMail:
+    import sendMail
 import adapt_code
+
 
 class BaseInfo():
     def __init__(self):
@@ -24,7 +29,8 @@ class BaseInfo():
         self.db_tbName=''
         self.db_titleName=[]
         
-        self.browser='chrome'       #iexplorer/chrome/firefox
+        self.browser='iexplorer'       #iexplorer/chrome/firefox
+        self.browser_mode=""
         pass
 
 BI=BaseInfo()
@@ -46,11 +52,13 @@ class TestDemo(unittest.TestCase):
         
         if BI.browser=="chrome":
             chrome_opt=webdriver.chrome.options.Options()
-            #chrome_opt.add_argument("--headless")
+            if BI.browser_mode=="headless":
+                chrome_opt.add_argument("--headless")
             self.driver=webdriver.Chrome(executable_path='C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe', options=chrome_opt)
         elif BI.browser=="iexplorer":
             ie_opt = webdriver.ie.options.Options()
-            #ie_opt.add_argument("--headless")
+            if BI.browser_mode=="headless":
+                ie_opt.add_argument("--headless")
             self.driver=webdriver.Ie(executable_path='C:\\Program Files\\Internet Explorer\\IEDriverServer.exe', options=ie_opt)
         elif BI.browser=="firefox":
             pass
@@ -64,8 +72,51 @@ class TestDemo(unittest.TestCase):
     def test_dataPickerByRightKey(self):
         #global value
         global BI
+        global config_resMail
         
         weiyun_links=[]
+        
+        
+        ##########################################
+        #临时代码，测试下载
+        weiyun_links=[["https://share.weiyun.com/5Fkualb", "2018-11-13", "大政治大爆卦 2018-11-13", "waiting to define.mkv", "大政治大爆卦 2018-11-13 陈其迈粉丝热情不如韩国瑜粉丝?徐佳青妙解:陈其迈粉丝有素质"]]
+        for wei_link in weiyun_links:
+            print ("<>URL: %s" % wei_link[0])
+            print ("<>FileName: %s" % wei_link[2])
+            self.driver.get(wei_link[0])
+            time.sleep(3)
+            
+            #在打开的界面中，检查是否需要登录
+            login_button=self.driver.find_element_by_class_name("layout-header").find_element_by_class_name("name")
+            if login_button.text=="登录":
+                login_button.click()
+                time.sleep(1)
+            
+                #这时弹出了iframe，所以要切换到新的iframe
+                self.driver.switch_to.frame(self.driver.find_elements_by_tag_name("iframe")[0])
+            
+                #默认是qq 二维码登录，找到账户密码登录的链接
+                self.driver.find_element_by_id("switcher_plogin").click()
+                
+                #找到输入账户的位置，先清除内容，再输入用户名
+                self.driver.find_element_by_id("loginform").find_element_by_id("uin_del").click()
+                self.driver.find_element_by_id("loginform").find_element_by_id("u").sendKeys("108253836")
+                self.driver.find_element_by_id("loginform").find_element_by_id("p").sendKeys("12@Achlbs")
+                self.driver.find_element_by_id("loginform").find_element_by_id("login_button").click()
+                #关闭弹出框
+                self.driver.find_element_by_id("loginform")
+
+                #回到原frame
+                self.driver.switch_to.default_content()
+                
+            time.sleep(1)
+            
+            #找到"保存微云"按钮
+            self.driver.find_element_by_
+            
+            
+            return
+        ##########################################
         
         
         while True:
@@ -154,7 +205,20 @@ class TestDemo(unittest.TestCase):
         
         print (">>>>Doneload weiyun file done")
         
-            
+        
+        if config_resMail:
+            '''
+            mailinfo=json.loads(sendMail.decryptInfo(sendMail.mail_info_cipherText, key=""))     
+            sendMail.MySendMail(server_host=mailinfo['mail_host'], \
+                                server_port=mailinfo['mail_port'], \
+                                user=['mail_user'], \
+                                password=['mail_pass'], \
+                                sender=['sender'], \
+                                receivers=['receivers']).sendRes_ByMail(plain_msg="lines", plain_msg=[])
+            '''
+            pass
+
+
         #导出数据到excel文件
         db = sqlite3.connect(BI.db_dbName)
         import pandas.io.sql as sql
