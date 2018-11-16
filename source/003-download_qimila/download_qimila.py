@@ -77,48 +77,6 @@ class TestDemo(unittest.TestCase):
         weiyun_links=[]
         
         
-        ##########################################
-        #临时代码，测试下载
-        weiyun_links=[["https://share.weiyun.com/5Fkualb", "2018-11-13", "大政治大爆卦 2018-11-13", "waiting to define.mkv", "大政治大爆卦 2018-11-13 陈其迈粉丝热情不如韩国瑜粉丝?徐佳青妙解:陈其迈粉丝有素质"]]
-        for wei_link in weiyun_links:
-            print ("<>URL: %s" % wei_link[0])
-            print ("<>FileName: %s" % wei_link[2])
-            self.driver.get(wei_link[0])
-            time.sleep(3)
-            
-            #在打开的界面中，检查是否需要登录
-            login_button=self.driver.find_element_by_class_name("layout-header").find_element_by_class_name("name")
-            if login_button.text=="登录":
-                login_button.click()
-                time.sleep(1)
-            
-                #这时弹出了iframe，所以要切换到新的iframe
-                self.driver.switch_to.frame(self.driver.find_elements_by_tag_name("iframe")[0])
-            
-                #默认是qq 二维码登录，找到账户密码登录的链接
-                self.driver.find_element_by_id("switcher_plogin").click()
-                
-                #找到输入账户的位置，先清除内容，再输入用户名
-                self.driver.find_element_by_id("loginform").find_element_by_id("uin_del").click()
-                self.driver.find_element_by_id("loginform").find_element_by_id("u").sendKeys("108253836")
-                self.driver.find_element_by_id("loginform").find_element_by_id("p").sendKeys("12@Achlbs")
-                self.driver.find_element_by_id("loginform").find_element_by_id("login_button").click()
-                #关闭弹出框
-                self.driver.find_element_by_id("loginform")
-
-                #回到原frame
-                self.driver.switch_to.default_content()
-                
-            time.sleep(1)
-            
-            #找到"保存微云"按钮
-            self.driver.find_element_by_
-            
-            
-            return
-        ##########################################
-        
-        
         while True:
             try:
                 cur_url = BI.baseUrls.pop(0)
@@ -147,63 +105,113 @@ class TestDemo(unittest.TestCase):
             
             #解析
             print (">>>>Soup Paser")
-            res,newUrls = adapt_code.soupParse(cur_url, soup, BI)
+            res,Urls = adapt_code.soupParse(cur_url, soup, BI)
             
             #分离出微云的链接和主站链接
-            temp_weiyun_links=[item for item in newUrls if re.search(r'''share.weiyun.com''', item)]
-            newUrls=[item for item in newUrls if not re.search(r'''share.weiyun.com''', item)]
+            newUrls=[item for item in Urls if not re.search(r'''share.weiyun.com''', item)]
+            if newUrls:
+                if False:
+                    BI.baseUrls+=newUrls
+                else:
+                    BI.baseUrls+=newUrls[:2]
+                
+                continue
             
-            if temp_weiyun_links:
-                assert 1==len(temp_weiyun_links)
-                weiyun_links+=[temp_weiyun_links+res[0]]
+            temp_weiyun_links=[item for item in Urls if re.search(r'''share.weiyun.com''', item)]
+            assert 1==len(temp_weiyun_links)
             
-            if True:
-                BI.baseUrls+=newUrls
-            else:
-                BI.baseUrls+=newUrls[:3]
-            
+            row = res[0]+temp_weiyun_links
+            rows=[iitt.replace("'", "") for iitt in row]
+
             #存入数据库
             db = sqlite3.connect(BI.db_dbName)        #连接数据库
             db_cu = db.cursor()                     #游标        
-        
-            for line in res:
-                rows=[iitt.replace("'", "") for iitt in line]
-                insertString='insert into '+BI.db_tbName+" ('"+        "', '".join(BI.db_titleName)        +"') values("
-                insertString+="'"+        "', '".join(rows)        +"'"
-                insertString+=')'
-        
-                try:
-                    print (">>>>")
-                    print (insertString)
-                except:
-                    print (">>>>Some un-printed Text")
-        
-                db_cu.execute(insertString)
-                #insert_index+=1
-                db.commit()
+            insertString='insert into '+BI.db_tbName+" ('"+        "', '".join(BI.db_titleName)        +"') values("
+            insertString+="'"+        "', '".join(rows)        +"'"
+            insertString+=')'
+            try:
+                print (">>>>")
+                print (insertString)
+            except:
+                print (">>>>Some un-printed Text")
+    
+            db_cu.execute(insertString)
+            #insert_index+=1
+            db.commit()
             db.close()
             
         #下载weiyun_links中保存的要下载的链接
-        print (">>>>Doneload weiyun file:")
-        #for wei_link in weiyun_links:
-            #print ("<>URL: %s" % wei_link[0])
-            #print ("<>FileName: %s" % wei_link[2])
-            #self.driver.get(wei_link[0])
-            #time.sleep(3)
-            
-            ##已经打开界面，现在获得网页编码
-            #source=self.driver.page_source
-            #soup = BeautifulSoup(source,"lxml")
-            
-            ##找到文件下载链接
-            #a = self.driver.find_elements_by_xpath('//*[@id="app"]/div/div[2]/div/div/div/div[2]/div[1]/div[2]/div[1]/div/ul/li/div/div[2]/p/span')
-            #time.sleep(2)
-            
-            ## 在找到的链接元素上模拟点击鼠标左键
-            #ActionChains(self.driver).click(a).perform()
-            #time.sleep(10)
+        print (">>>>Save file to my weiyun:")
         
-        print (">>>>Doneload weiyun file done")
+        #从数据库中取出file_name列为空的数据，这代表文件还没有转存到我的微云
+        db = sqlite3.connect(BI.db_dbName)
+        import pandas.io.sql as sql
+        import numpy as np
+        weiyun_links=sql.read_sql_query('SELECT * FROM '+BI.db_tbName, db)
+        weiyun_links=np.array(weiyun_links)
+        weiyun_links=weiyun_links.tolist()
+        
+        for wei_link in weiyun_links:
+            print ("<>URL: %s" % wei_link[4])
+            print ("<>FileName: %s" % wei_link[1])
+            self.driver.get(wei_link[4])
+            time.sleep(3)
+            
+            #在打开的界面中，检查是否需要登录
+            login_button=self.driver.find_element_by_class_name("layout-header").find_element_by_class_name("name")
+            if login_button.text=="登录":
+                login_button.click()
+                time.sleep(1)
+            
+                #这时弹出了iframe，所以要切换到新的iframe
+                self.driver.switch_to.frame(self.driver.find_elements_by_tag_name("iframe")[0])
+            
+                #默认是qq 二维码登录，找到账户密码登录的链接
+                self.driver.find_element_by_id("switcher_plogin").click()
+                
+                #找到输入账户的位置，先清除内容，再输入用户名
+                uin_del = self.driver.find_element_by_id("loginform").find_element_by_id("uin_del")
+                if uin_del.is_displayed():#判断元素可见
+                    uin_del.click()
+                self.driver.find_element_by_id("loginform").find_element_by_id("u").send_keys("108253836")
+                self.driver.find_element_by_id("loginform").find_element_by_id("p").send_keys("12@Achlbs")
+                self.driver.find_element_by_id("loginform").find_element_by_id("login_button").click()
+                
+                #回到原frame
+                self.driver.switch_to.default_content()
+
+                #关闭弹出框。由于关闭按钮是利用CSS做出来的，不是输入类的元素，所以这里需要用JS执行的方式来关闭
+                self.driver.execute_script("arguments[0].click();", self.driver.find_element_by_class_name("close-btn").find_element_by_tag_name("i"))
+
+                
+                
+            time.sleep(1)
+            
+            #这时已经登录了微云
+            #先找到视频的选择按钮
+            self.driver.execute_script("arguments[0].click();", self.driver.find_element_by_class_name("list-group-hd").find_element_by_tag_name("i"))
+            
+            #得到文件名
+            saveFileName=self.driver.find_element_by_class_name("list-group-bd").find_element_by_class_name("figure-list-item-txt").find_element_by_tag_name("span").text
+            
+            
+            #找到"保存微云"按钮，并点击
+            self.driver.execute_script("arguments[0].click();", self.driver.find_element_by_class_name("layout-body").find_element_by_class_name("action-item").find_element_by_tag_name("i"))
+            
+            #保存的时候会弹框确认存储位置，确认到默认路径既可
+            temp_buttons=self.driver.find_element_by_class_name("modal-show").find_elements_by_tag_name("button")
+            for temp_button in temp_buttons:
+                if temp_buttons.text=="确定":
+                    temp_buttons.click()
+                    pass
+                pass
+            print ("Save %s to weiyun OK" % saveFileName)
+            time.sleep(1)
+            
+            #将saveFileName信息放入数据库中
+            
+        
+        print (">>>>Save file to my weiyun done")
         
         
         if config_resMail:

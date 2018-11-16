@@ -90,7 +90,7 @@ def soupParse(cur_url, soup, BI):
 
             #下载
             print (">>>>%s : %s" % (program_name, link))
-            file_name='waiting to define.mkv'
+            file_name=''
             
             downloaded_program=[[datetime, program_name, file_name, description]]
             newUrls.append(link)
